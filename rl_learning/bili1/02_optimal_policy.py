@@ -333,7 +333,9 @@ def policy_evaluation(pi, P, gamma=1.0, theta=1e-10):
         V = np.zeros(len(P), dtype=np.float64)
         for s in range(len(P)):
             for prob, next_state, reward, done in P[s][pi(s)]:
-                V[s] += prob * (reward + gamma * prev_V[next_state] * (not done))
+                # 这里prob已知，相当于policy已知。但是很多时候agent不知道policy，只有与环境
+                # 交互的能力
+                V[s] += prob * (reward + gamma * prev_V[next_state] * (not done))  #
         if np.max(np.abs(prev_V - V)) < theta:
             break
         prev_V = V.copy()
@@ -361,12 +363,15 @@ def policy_improvement(V, P, gamma=1.0):
 def policy_iteration(P, gamma=1.0, theta=1e-10):
     random_actions = np.random.choice(4, 16)
     pi = lambda s: {s:a for s, a in enumerate(random_actions)}[s]
+    optimize_steps = 0
     while True:
         old_pi = {s:pi(s) for s in range(len(P))}
         V = policy_evaluation(pi, P, gamma, theta)
         pi = policy_improvement(V, P, gamma)
+        optimize_steps += 1
         if old_pi == {s:pi(s) for s in range(len(P))}:
             break
+        print(f"optimize_steps: {optimize_steps}")
     return V, pi
 
 
