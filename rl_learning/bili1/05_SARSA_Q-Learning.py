@@ -69,6 +69,7 @@ def q_learning(env,episodes=100,gamma=0.9,test_policy_freq=1000):
             next_state, reward, finished = env.step(action)
             # 学习所用的Q值和sarsa不一样
             target = reward + gamma * Q[next_state].max() * (not finished)
+            # 计算目标值（基于贝尔曼最优方程）
             error = target - Q[state][action]
             Q[state][action] = Q[state][action] + alphas[i] * error
             state = next_state
