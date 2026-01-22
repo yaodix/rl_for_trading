@@ -1,5 +1,8 @@
 ##  frozen_lake.py
-
+'''
+env: 冰壶环境
+agent: 随机策略演示
+'''
 
 import random
 import numpy as np
@@ -312,7 +315,7 @@ def print_policy(pi, n_cols=4):
 if __name__ == "__main__":
    
     env = FrozenLake()
-    # env.show()
+    env.show()
     # env.step(1)
     # env.show()
     

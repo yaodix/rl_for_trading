@@ -1,6 +1,6 @@
-##  frozen_lake.py
+'''
 
-
+'''
 import random
 import numpy as np
 
@@ -259,7 +259,6 @@ class FrozenLake:
                 print(str(s).zfill(2), "".rjust(3), end=" ")
             if (i + 1) % 4 == 0: print("|")
 
-
     def step(self, action):
         '''
             action: 0: left, 1: down, 2: right, 3: up
@@ -334,8 +333,8 @@ def policy_evaluation(pi, P, gamma=1.0, theta=1e-10):
         for s in range(len(P)):
             for prob, next_state, reward, done in P[s][pi(s)]:
                 # 这里prob已知，相当于policy已知。但是很多时候agent不知道policy，只有与环境
-                # 交互的能力
-                V[s] += prob * (reward + gamma * prev_V[next_state] * (not done))  #
+                # 交互的能力, 下面方程对应 状态价值函数的贝尔曼期望方程
+                V[s] += prob * (reward + gamma * prev_V[next_state] * (not done)) 
         if np.max(np.abs(prev_V - V)) < theta:
             break
         prev_V = V.copy()
@@ -399,5 +398,5 @@ if __name__ == "__main__":
     Value, Pi = policy_iteration(env.transition)
     print(Value.reshape(4,4))
     print_policy(Pi)
-    test_res = test_game(env, Pi)
+    test_res = test_game(env, Pi)  # 0.75
     print(test_res)
