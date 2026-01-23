@@ -327,11 +327,15 @@ class Human_Agent:
         return self.policy_dict[state]
     
 def policy_evaluation(pi, P, gamma=1.0, theta=1e-10):
+    '''
+    迭代方式计算策略评估，直到价值函数收敛。
+    使用迭代方式进行评估是因为这是求解贝尔曼期望方程的标准方法。
+    '''
     prev_V = np.zeros(len(P), dtype=np.float64)
     while True:
         V = np.zeros(len(P), dtype=np.float64)
         for s in range(len(P)):
-            for prob, next_state, reward, done in P[s][pi(s)]:
+            for prob, next_state, reward, done in P[s][pi(s)]: #只计算当前策略选择的动作
                 # 这里prob已知，相当于policy已知。但是很多时候agent不知道policy，只有与环境
                 # 交互的能力, 下面方程对应 状态价值函数的贝尔曼期望方程
                 V[s] += prob * (reward + gamma * prev_V[next_state] * (not done)) 
@@ -344,7 +348,7 @@ def policy_evaluation(pi, P, gamma=1.0, theta=1e-10):
 def Q_function(V, P, gamma=1.0):
     Q = np.zeros((len(P), len(P[0])), dtype=np.float64)
     for s in range(len(P)):
-        for a in range(len(P[s])):
+        for a in range(len(P[s])): # 评估所有可能动作的价值，以便选择最优动作
             for prob, next_state, reward, done in P[s][a]:
                 Q[s][a] += prob * (reward + gamma * V[next_state] * (not done))
     return Q
@@ -353,12 +357,18 @@ def Q_function(V, P, gamma=1.0):
 def policy_improvement(V, P, gamma=1.0):
     Q = np.zeros((len(P), len(P[0])), dtype=np.float64)
     for s in range(len(P)):
-        for a in range(len(P[s])):
+        for a in range(len(P[s])): #计算所有动作的价值
             for prob, next_state, reward, done in P[s][a]:
-                Q[s][a] += prob * (reward + gamma * V[next_state] * (not done))
+                Q[s][a] += prob * (reward + gamma * V[next_state] * (not done))  # 从V计算Q
     new_pi = lambda s: {s:a for s, a in enumerate(np.argmax(Q, axis=1))}[s]
     return new_pi
 
+# 这里为什么policy_evaluation用Value值评估，而不是Q值评估？
+# 因为Q值评估需要知道当前状态和动作，而policy_evaluation只需要知道当前状态。
+# 所以用Value值评估更简单。
+# 为什么用Q值更新策略？
+# 因为Q值评估是对所有动作的期望，而policy_evaluation只需要知道当前状态的Value值。
+# 所以用Q值更新策略更简单。
 def policy_iteration(P, gamma=1.0, theta=1e-10):
     random_actions = np.random.choice(4, 16)
     pi = lambda s: {s:a for s, a in enumerate(random_actions)}[s]
