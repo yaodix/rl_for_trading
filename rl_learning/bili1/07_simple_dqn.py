@@ -2,8 +2,7 @@
 Q表缺点
 1.无法处理state/action过多的问题
 2.无法出连续的state/action问题
-3. 不具备泛化能力
-
+3.不具备泛化能力
 
 '''
 
@@ -21,7 +20,7 @@ def decay_schedule(init_value, min_value, decay_ratio, max_steps, log_start=-2, 
     values = np.pad(values, (0, rem_steps), 'edge')
     return values
   
-def one_hot(x,size):
+def one_hot(x, size):
     result = np.zeros(size)
     result[x] = 1
     return result 
@@ -73,7 +72,7 @@ def Simple_DQN(env, lr = 0.001,episodes=100, max_step = 100,gamma=0.9,test_polic
             td_target = reward + gamma * q_value_next.max() * (not finished)
             target[action] = torch.tensor(td_target, dtype=torch.float32)            
             optimizer.zero_grad()
-            td_error = loss_fn(q_value, target)
+            td_error = loss_fn(q_value, target)  # 简易设计，并不合理，合理方式见dqn
             td_error.backward()
             optimizer.step()
             state = next_state
@@ -96,9 +95,11 @@ def Simple_DQN(env, lr = 0.001,episodes=100, max_step = 100,gamma=0.9,test_polic
   
 if __name__ == '__main__':
   env = gym.make('FrozenLake-v1')
+  # 19000 Reaches goal 41.00%., max 62
   Simple_DQN(env,lr = 0.001,episodes=20000, max_step = 100,gamma=0.9,test_policy_freq=1000)    
 
   env = gym.make('FrozenLake-v1',map_name="8x8")
+  # 5%
   Simple_DQN(env,lr = 0.001,episodes=20000, max_step = 100,gamma=0.9,test_policy_freq=1000)
 
   '''

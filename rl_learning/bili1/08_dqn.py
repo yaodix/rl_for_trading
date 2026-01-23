@@ -50,7 +50,7 @@ class QTrainer:
         target =  (reward + self.gamma * Q_value_next * (1 - done)).squeeze()
 
         self.optimizer.zero_grad()
-        loss = self.criterion(Q_value, target)
+        loss = self.criterion(Q_value, target)  # 合理的损失设计，只计算被选中动作的损失，防止梯度污染
         loss.backward()
         self.optimizer.step()
 

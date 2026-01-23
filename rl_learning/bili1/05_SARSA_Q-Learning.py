@@ -3,6 +3,8 @@
 只在一幕结束之后 才用这些奖励来计算总回报 ，并更新价值函数。
 
 时序差分算法可以在每一步都更新价值函数，而不需要等待一幕结束。
+
+蒙特卡洛的滑动平均公式  变换 学习率和G(t)表达，形成更新公式 状态价值函数：𝑉(𝑆𝑡) = 𝑉(𝑆𝑡) + 𝛼[𝑅𝑡+1 + 𝛾𝑉(𝑆𝑡+1) − 𝑉(𝑆𝑡)]
 '''
 
 from help import FrozenLake, print_policy, test_game
@@ -86,8 +88,9 @@ def q_learning(env,episodes=100,gamma=0.9,test_policy_freq=1000):
 
 if __name__ == '__main__':
   env = FrozenLake()
-  policy_sarsa, Q_sarsa = sarsa(env, episodes=20000)  # sarsa所利用的信息中噪声较少，学习比蒙特卡罗更快
+  # sarsa所利用的信息中噪声较少，学习比蒙特卡罗更快
+  policy_sarsa, Q_sarsa = sarsa(env, episodes=20000) # Test episode 19000 Reaches goal 75.00%
   print_policy(policy_sarsa)
   
-  policy_qlearning,Q_qlearning = q_learning(env, episodes=20000)
+  policy_qlearning, Q_qlearning = q_learning(env, episodes=20000) # Test episode 19000 Reaches goal 75.00%
   print_policy(policy_qlearning)

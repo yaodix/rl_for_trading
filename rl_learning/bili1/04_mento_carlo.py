@@ -34,7 +34,7 @@ def play_game(env, Q ,max_steps=200):
     while not finished:
         action = select_action(state, Q, mode='both')
         next_state, reward, finished = env.step(action)
-        experience = (state, action, finished,reward)
+        experience = (state, action, finished, reward)
         episode.append(experience)
         if step >= max_steps:
             break
@@ -58,7 +58,7 @@ def monte_carlo(env, episodes=10000, test_policy_freq=1000):
                 visited[state][action] = True
                 discount = np.array([0.9**i for i in range(len(episode[t:]))])
                 reward = episode[t:, -1]
-                G = np.sum( discount * reward)
+                G = np.sum(discount * reward)
                 if returns.get(state_action):
                     returns[state_action].append(G)
                 else:
@@ -72,12 +72,12 @@ def monte_carlo(env, episodes=10000, test_policy_freq=1000):
                 print("Test episode {} Reaches goal {:.2f}%. ".format
                 (i, test_game(env, pi)*100))
             
-    return pi,Q
+    return pi, Q
   
   
 if __name__ == "__main__":
     env = FrozenLake()
-    policy_mc, Q = monte_carlo(env, episodes=20000)
+    policy_mc, Q = monte_carlo(env, episodes=20000) # Test episode 19000 Reaches goal 63.00%.max 91%
     print_policy(policy_mc)
     print('Reaches goal {:.2f}%. '.format(test_game(env, policy_mc)*100))
     
