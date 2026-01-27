@@ -328,7 +328,7 @@ class Human_Agent:
     
 def policy_evaluation(pi, P, gamma=1.0, theta=1e-10):
     '''
-    迭代方式计算策略评估，直到价值函数收敛。
+    迭代方式计算策略评估，直到价值函数收敛。策略已经固定在pi中
     使用迭代方式进行评估是因为这是求解贝尔曼期望方程的标准方法。
     '''
     prev_V = np.zeros(len(P), dtype=np.float64)
