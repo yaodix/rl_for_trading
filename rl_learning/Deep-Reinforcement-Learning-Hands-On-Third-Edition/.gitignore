@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+runs
+saves
+video
+__pycache__
+.ipynb_checkpoints/
