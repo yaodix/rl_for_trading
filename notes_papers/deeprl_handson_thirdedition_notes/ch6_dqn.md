@@ -49,10 +49,9 @@ This modification of the value iteration method is known as Q-learning,
    * epsilon-greedy method
 2. 解决训练稳定问题
    * target-net
-3. 解决数据分布问题
+3. 解决数据分布和独立性问题
    * replay buffer
 
 ![1770116912624](image/ch6_dqn/1770116912624.png)
-
 
 DQN通过重新设计网络架构，从"输入状态-动作对，输出单个Q值"变为"只输入状态，一次性输出所有动作的Q值"，获得了显著的性能提升，这是深度Q学习能够成功应用于复杂环境的重要因素之一。

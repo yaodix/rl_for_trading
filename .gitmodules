@@ -1,7 +1,3 @@
 [submodule "rl_learning/Ten_Minute_RL"]
 	path = rl_learning/Ten_Minute_RL
 	url = git@github.com:xccds/Ten_Minute_RL.git
-
-[submodule "rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition"]
-	path = rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition
-	url = git@github.com:PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Third-Edition.git

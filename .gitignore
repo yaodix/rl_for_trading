@@ -152,3 +152,4 @@ checkpoints/
 runs/
 experiments/
 results/
+*.dat

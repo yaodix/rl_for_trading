@@ -14,6 +14,7 @@ git submodule update --init
   * [X] [ten_minutes_rl](https://github.com/xccds/Ten_Minute_RL.git) 与其本地学习版rl_learning/bili1
 * [ ] 迈入实战
   * [ ] [deep rl hands on-third edition](https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Third-Edition) 本地学习版rl_learning/deeprl_handson_thirdedition
+  * [ ] 修改源代码适配gymnasium==1.2.3 to chapter7
 * [ ] 训练实战
 
 ### 进阶
