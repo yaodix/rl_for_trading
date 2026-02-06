@@ -2,6 +2,7 @@
 import gymnasium as gym
 import ptan
 import typing as tt
+import ale_py
 
 import torch
 import torch.optim as optim
@@ -67,4 +68,5 @@ def train(params: common.Hyperparams,
 
 if __name__ == "__main__":
     args = common.argparser().parse_args()
+    print(args)
     common.train_or_tune(args, train, BEST_PONG)

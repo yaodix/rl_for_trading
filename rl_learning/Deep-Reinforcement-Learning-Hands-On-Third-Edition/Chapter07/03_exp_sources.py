@@ -9,6 +9,8 @@ if __name__ == "__main__":
     print(f"env.step(1) -> {s}")
     s = env.step(2)
     print(f"env.step(2) -> {s}")
+    s = env.step(1)
+    print(f"env.step(1) -> {s}")
 
     for _ in range(10):
         r = env.step(0)
