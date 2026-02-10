@@ -1,11 +1,19 @@
 import numpy as np
 import pathlib
+
+import sys
+import os
+ 
+sys.path.append(os.path.join(os.path.dirname(__file__),".."))
 from lib import data
 
 
 def test_read_csv():
-    prices = data.read_csv(pathlib.Path("data/YNDX_160101_161231.csv"))
+    data_file_path = "/home/yao/myproject/rl_for_trading/rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition/Chapter10/data/YNDX_160101_161231.csv"
+    prices = data.read_csv(pathlib.Path(data_file_path))
     assert isinstance(prices, data.Prices)
+    print(type(prices))
+    print(prices.open[:10])
 
 
 def test_prices_to_relative():
@@ -25,4 +33,9 @@ def test_prices_to_relative():
 def test_price_files():
     files = data.price_files("data")
     assert len(files) > 0
+
+if __name__ == "__main__":
+    # test_read_csv()
+    test_prices_to_relative()
+    test_price_files()
 

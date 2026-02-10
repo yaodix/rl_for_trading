@@ -14,8 +14,9 @@ from ignite.contrib.handlers import tensorboard_logger as tb_logger
 from lib import environ, data, models, common, validation
 
 SAVES_DIR = pathlib.Path("saves")
-STOCKS = "data/YNDX_160101_161231.csv"
-VAL_STOCKS = "data/YNDX_150101_151231.csv"
+root_dir = "/home/yao/myproject/rl_for_trading/rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition/Chapter10/"
+STOCKS = root_dir + "data/YNDX_160101_161231.csv"
+VAL_STOCKS = root_dir + "data/YNDX_150101_151231.csv"
 
 BATCH_SIZE = 32
 BARS_COUNT = 10

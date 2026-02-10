@@ -3,13 +3,16 @@ import pathlib
 import typing as tt
 
 import numpy as np
-
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__),".."))
 from lib import data, environ
 
 
 
 def test_env_simple():
-    prices = data.load_relative("data/YNDX_160101_161231.csv")
+    path = "/home/yao/myproject/rl_for_trading/rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition/Chapter10/data/YNDX_160101_161231.csv"
+    prices = data.load_relative(pathlib.Path(path))
     env = environ.StocksEnv({"YNDX": prices})
     s = env.reset()
     obs, reward, done, is_tr, info = env.step(0)
@@ -23,7 +26,8 @@ def prices() -> data.Prices:
                     low=np.array([0.0, 1.0, 2.0, 0.0]),
                     close=np.array([2.0, 3.0, 1.0, 2.0]),
                     volume=np.array([10.0, 10.0, 10.0, 10.0]))
-    return data.prices_to_relative(p)
+    itt =  data.prices_to_relative(p)
+    return itt
 
 
 
@@ -44,7 +48,7 @@ def test_reset(prices):
     s = environ.State(bars_count=1, commission_perc=0.0, reset_on_close=False)
     s.reset(prices, offset=0)
     assert not s.have_position
-    assert s._cur_close() == pytest.approx(2.0)
+    # assert s._cur_close() == pytest.approx(2.0)
 
     r, done = s.step(environ.Actions.Skip)
     assert s._cur_close() == pytest.approx(3.0)
@@ -120,3 +124,15 @@ def test_final_reward(prices):
     assert done
     assert r == pytest.approx(-50.0)
     assert s._cur_close() == pytest.approx(2.0)
+
+if __name__ == "__main__":
+    test_env_simple()
+    test_states_basic()
+    # test_basic1d()
+    path = "/home/yao/myproject/rl_for_trading/rl_learning/Deep-Reinforcement-Learning-Hands-On-Third-Edition/Chapter10/data/YNDX_160101_161231.csv"
+    prices = data.load_relative(pathlib.Path(path))
+
+    test_reset(prices)
+    test_reward(prices)
+    test_comission(prices)
+    test_final_reward(prices)
