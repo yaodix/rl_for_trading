@@ -16,5 +16,9 @@ git submodule update --init
   * [ ] [deep rl hands on-third edition](https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Third-Edition) 本地学习版rl_learning/deeprl_handson_thirdedition
   * [X] 修改源代码适配gymnasium==1.2.3 up to chapter7
 * [ ] 训练实战
+  * [ ] udacity-part05 demo
 
 ### 进阶
+
+* [ ] 
+* [ ] 深入学习技术指标，基于[investopedia](https://www.investopedia.com/how-to-develop-an-effective-trading-strategy-4802682)
