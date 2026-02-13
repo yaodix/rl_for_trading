@@ -1,45 +1,38 @@
 ## Building a DQN-based Trading Agent
 
-Review the essential steps in constructing a DQN-based reinforcement learning trading agent:
+1. 数据模块
 
-1. **Understand DQNs** : Grasp the workings of Deep Q-Networks, focusing on experience replay and target networks to ensure stability.
-2. **Define the Trading Environment** :
+   * **Market selection** : Stocks, forex, commodities.
+   * **Timeframes** : Intraday, daily, or weekly.
+   * **Features** : Price, volume, technical indicators.
+   * 数据处理
+     * Collect historical market data.
+     * Preprocess by addressing missing values and normalizing features.
+2. 交易环境
+3. 智能体设计
 
-* **Market selection** : Stocks, forex, commodities.
-* **Timeframes** : Intraday, daily, or weekly.
-* **Features** : Price, volume, technical indicators.
-
-1. **Data Preparation** :
-
-* Collect historical market data.
-* Preprocess by addressing missing values and normalizing features.
-
-1. **Neural Network Design** :
-
-* Structure with input, hidden, and output layers.
-* Experiment with architecture to optimize performance.
-
-1. **Experience Replay** : Store past interactions in the buffer, sampling mini-batches for DQN training.
-2. **Craft the Reward Function** :
-
-* Align with trading goals.
-* Manage risk with penalties for excessive trading.
-
-1. **Training Loop** :
-
-* Implement DQN interactions, updating Q-network. via experience reply.
-* Track losses and trades to evaluate each training episode.
-
-1. **Backtesting and Validation** :
+   * DQN
+   * Actioin
+   * Reward
+     * Align with trading goals.
+     * Manage risk with penalties for excessive trading.
+4. **Backtesting and Validation** :
 
 * Confirm generalization to unseen data.
 
-1. **Risk Management** :
+5. **Risk Management** :
 
 * Set position limits and utilize stop-loss.
 * Diversify across assets.
+* **止盈止损动作是将人类风控先验注入RL策略的桥梁，不是简化问题，而是让模型在更安全、更贴近实盘的约束下学习。**
 
-1. **Deployment and Monitoring** :
+6. **Continuous Monitoring**
+   * Regularly retrain the model using recent data.
+   * Continuously refine for quality trades.
+
+![1770948271642](image/RL_trading_agent设计/1770948271642.png)
+
+7. **Deployment and Monitoring** :
 
 * Start with small capital.
 * Use real-time monitoring tools.
