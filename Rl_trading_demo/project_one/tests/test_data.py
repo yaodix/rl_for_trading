@@ -34,6 +34,7 @@ def test_price_files():
     files = data.price_files("data")
     assert len(files) > 0
 
+
 if __name__ == "__main__":
     # test_read_csv()
     test_prices_to_relative()
