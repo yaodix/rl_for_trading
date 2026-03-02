@@ -1,3 +1,0 @@
-[submodule "rl_learning/Ten_Minute_RL"]
-	path = rl_learning/Ten_Minute_RL
-	url = git@github.com:xccds/Ten_Minute_RL.git
