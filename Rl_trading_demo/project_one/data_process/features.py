@@ -25,21 +25,7 @@ def test_calculate_gold_etf_features():
   print(f"{df_30.info()}")
   print(f"df describe {df_30.describe()}")   # 看最大最小值
 
-# todo：如果有，显示缺失值的索引
-# forward fill missing values
-# data=data.ffill()
 
-
-# 特征计算
-
-# Calculate 20-day bollinger bands
-# data['MA5'] = data['Close'].rolling(window=5).mean()
-# data['MA20'] = data['Close'].rolling(window=20).mean()
-# data['STD20'] = data['Close'].rolling(window=20).std()
-# data['BB_upper'] = data['MA20'] + (data['STD20'] * 2)
-# data['BB_lower'] = data['MA20'] - (data['STD20'] * 2)
-# data['Log_Ret'] = np.log(data['Close'] / data['Close'].shift(1))
-# data['Vol20'] = data['Log_Ret'].rolling(window=20).std() * np.sqrt(252)
 def calculate_gold_etf_features(df):
     """
     计算黄金ETF第一、二层特征
@@ -108,7 +94,7 @@ def calculate_gold_etf_features(df):
     # 删除中间计算列（可选，保留一些常用列）
     columns_to_keep = [
         # 'Open', 'High', 'Low', 'Close', 'Volume',  # 原始数据
-        'Open',   # 不训练
+        'Open', "Close",  # 不训练
         'Returns', 'Amplitude', 'Volume_Ratio', 'Close_Position',  # 第一层
         'RSI_Norm', 'ATR_Ratio', 'EMA_Diff', 'BB_Width', 'Vol20'  # 第二层（归一化后）
     ]
@@ -122,14 +108,14 @@ def calculate_gold_etf_features(df):
     
     return data
   
-def smart_feature_normalization(df, window=20, min_periods=20):
+def smart_feature_normalization(df, window=22*8, min_periods=20):
     """
     智能特征归一化：根据不同特征类型采用不同方法
     使用shift(1)完全避免未来信息泄露
     
     参数:
         df: 包含原始特征的DataFrame
-        window: 滚动窗口（对于30分钟数据，252 ≈ 1个月）
+        window: 滚动窗口（对于30分钟数据，8*22 ≈ 1个月）
         min_periods: 最小期数
     
     返回:
@@ -178,47 +164,48 @@ def smart_feature_normalization(df, window=20, min_periods=20):
     if 'Close_Position' in df.columns:
         df_result['Close_Position_Norm'] = df['Close_Position']  # 保持原值
     
-    if 'RSI_Norm' in df.columns:
-        df_result['RSI_Norm_Final'] = df['RSI_Norm']  # 保持原值
+    # if 'RSI_Norm' in df.columns:
+        # df_result['RSI_Norm_Final'] = df['RSI_Norm']  # 保持原值
         
     # 仅保留norm特征和open
     norm_features = [col for col in df_result.columns if col.endswith('_Norm') or col.endswith('_Norm_Final')]
-    df_result = df_result[['Open'] + norm_features]
+    df_result = df_result[['Open', 'Close'] + norm_features]
     df_result = df_result.dropna()
     
     return df_result
+  
+def get_feat_split(src_dir, split_ratio=[0.75, 0.9], windows=22*8):
+  '''
+  src_dir: 数据文件路径,包含OHLCV列
+  输出:
+    df_train_norm, df_val_norm, df_test_norm: 归一化后的训练集和测试集，包含Open, Close, 归一化特征列
+  '''
+  df_30 = pd.read_csv(src_dir)
+  df_30.set_index('trade_time', inplace=True)  # inplace=True, 直接修改原数据
+  df_30.drop(columns=['amount'], inplace=True)
+  df_30.columns = df_30.columns.str.title()
+  
+  df_30_features = calculate_gold_etf_features(df_30)
+  
+  split_size_train = int(len(df_30_features) * split_ratio[0])
+  split_size_test = int(len(df_30_features) * split_ratio[1])
+  df_feat_head = df_30_features[:split_size_train]
+  df_feat_val = df_30_features[split_size_train:split_size_test]
+  df_feat_tail = df_30_features[split_size_test:]
+  
+  df_feat_head_norm = smart_feature_normalization(df_feat_head, windows)
+  df_feat_val_norm = smart_feature_normalization(df_feat_val, windows)
+  df_feat_tail_norm = smart_feature_normalization(df_feat_tail, windows)
+  
+  print(f"train_size: {len(df_feat_head_norm)}")
+  print(f"val_size: {len(df_feat_val_norm)}")
+  print(f"test_size: {len(df_feat_tail_norm)}")
+  
+  return df_feat_head_norm, df_feat_val_norm, df_feat_tail_norm
+
 
 if __name__ == '__main__':
-  df_30 = pd.read_csv('Rl_trading_demo/project_one/data/518880.SH.30m.csv')
-  df_30.set_index('trade_time', inplace=True)  # inplace=True, 直接修改原数据
-  #去除amount列
-  df_30.drop(columns=['amount'], inplace=True)
-  # columns首字母大写
-  df_30.columns = df_30.columns.str.title()
-  print(df_30)
-  
-  # split train and test
-  train_size = int(len(df_30) * 0.8)
-  df_train = df_30[:train_size]
-  df_test = df_30[train_size:]
-
-  df_30_features = calculate_gold_etf_features(df_30)
-  print(df_30_features)
-  print(df_30_features.info())
-  print(df_30_features.describe())
-  
-  
-  print(f"===df_30_norm===")
-  df_norm = smart_feature_normalization(df_30_features)
-  print(df_norm)
-  print(df_norm.info())
-  print(df_norm.describe())
-  
-  
-  
-
-
-  # split dataset df into train (50%) and test (50%) datasets
-  # training_rows = int(len(static_normed_dataset.index)/2)
-  # train_df = static_normed_dataset.iloc[:training_rows]
-  # test_df = static_normed_dataset.iloc[training_rows:]
+  df_30_dir = 'Rl_trading_demo/project_one/data/518880.SH.30m.csv'
+  df_train_norm, df_val_norm, df_test_norm = get_feat_split(df_30_dir, split_ratio= [0.75, 0.9])
+  print(df_train_norm.info())
+  print(df_test_norm.info())

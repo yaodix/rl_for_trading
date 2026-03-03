@@ -10,3 +10,5 @@ df_test = pd.DataFrame({
 print(df_test)
 
 print(df_test.shift(1))
+
+print(0.5/10000)

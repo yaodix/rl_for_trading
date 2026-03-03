@@ -8,8 +8,7 @@ import numpy as np
 from . import data
 
 DEFAULT_BARS_COUNT = 10
-DEFAULT_COMMISSION_PERC = 0.1
-
+DEFAULT_COMMISSION_PERC = 0.5/10000.  # 是万0.5吗
 
 class Actions(enum.Enum):
     Skip = 0
@@ -19,20 +18,20 @@ class Actions(enum.Enum):
 
 class State:
     def __init__(self, bars_count: int, commission_perc: float, reset_on_close: bool,
-                 reward_on_close: bool = True, volumes: bool = True):
+                 reward_on_close: bool = True, feat_aug: bool = False):
         assert bars_count > 0
         assert commission_perc >= 0.0
         self.bars_count = bars_count
         self.commission_perc = commission_perc
         self.reset_on_close = reset_on_close
         self.reward_on_close = reward_on_close
-        self.volumes = volumes
+        self.feat_aug = feat_aug
         self.have_position = False
         self.open_price = 0.0
         self._prices = None  # 价格数据（稍后设置）
         self._offset = None  # 当前时间偏移量（在价格序列中的位置）
 
-    def reset(self, prices: data.Prices, offset: int):
+    def reset(self, prices: data.PriceGold, offset: int):
         assert offset >= self.bars_count-1
         self.have_position = False
         self.open_price = 0.0
@@ -41,12 +40,14 @@ class State:
 
     @property
     def shape(self) -> tt.Tuple[int, ...]:
-        # [h, l, c] * bars + position_flag + rel_profit
-        if self.volumes:
-            return 4 * self.bars_count + 1 + 1,
+        # ['Returns', 'Amplitude', 'Volume_Ratio', 'Close_Position'] * bars + position_flag + rel_profit
+        if self.feat_aug:
+            # + 'RSI_Norm', 'ATR_Ratio', 'EMA_Diff', 'BB_Width', 'Vol20'  # 第二层
+            return 9 * self.bars_count + 1 + 1,
         else:
-            return 3 * self.bars_count + 1 + 1,
-
+            return 4 * self.bars_count + 1 + 1,
+    
+    # TODO: 实现特征增强
     def encode(self) -> np.ndarray:
         """
         Convert current state into numpy array.
@@ -55,15 +56,15 @@ class State:
         shift = 0
         for bar_idx in range(-self.bars_count+1, 1):
             ofs = self._offset + bar_idx
-            res[shift] = self._prices.high[ofs]  # 最高价（相对开盘价的百分比）
+            res[shift] = self._prices.Amplitude_Norm[ofs]  # 最高价（相对开盘价的百分比）
             shift += 1
-            res[shift] = self._prices.low[ofs]
+            res[shift] = self._prices.Returns_Norm[ofs]
             shift += 1
-            res[shift] = self._prices.close[ofs]
+            res[shift] = self._prices.Volume_Ratio_Norm[ofs]
             shift += 1
-            if self.volumes:
-                res[shift] = self._prices.volume[ofs]
-                shift += 1
+            res[shift] = self._prices.Close_Position_Norm[ofs]
+            shift += 1
+            
         res[shift] = float(self.have_position)
         shift += 1
         if not self.have_position:
@@ -76,9 +77,8 @@ class State:
         """
         Calculate real close price for the current bar
         """
-        open = self._prices.open[self._offset]
-        rel_close = self._prices.close[self._offset]
-        return open * (1.0 + rel_close)
+        rel_close = self._prices.Close[self._offset]
+        return rel_close
 
     def step(self, action: Actions) -> tt.Tuple[float, bool]:
         """
@@ -98,17 +98,17 @@ class State:
             reward -= self.commission_perc
             done |= self.reset_on_close
             if self.reward_on_close:
-                reward += 100.0 * (close / self.open_price - 1.0)
+                reward += 1* (close / self.open_price - 1.0)
             self.have_position = False
             self.open_price = 0.0
 
         self._offset += 1
         prev_close = close
         close = self._cur_close()
-        done |= self._offset >= self._prices.close.shape[0]-1
+        done |= self._offset >= self._prices.Close.shape[0]-1
 
         if self.have_position and not self.reward_on_close:
-            reward += 100.0 * (close / prev_close - 1.0)
+            reward += 1 * (close / prev_close - 1.0)
 
         return reward, done
 
@@ -146,35 +146,39 @@ class StocksEnv(gym.Env):
     spec = EnvSpec("StocksEnv-v0")
 
     def __init__(
-            self, prices: tt.Dict[str, data.Prices],
+            self, prices: tt.Dict[str, data.PriceGold],
             bars_count: int = DEFAULT_BARS_COUNT,
             commission: float = DEFAULT_COMMISSION_PERC,
-            reset_on_close: bool = True, state_1d: bool = False,
+            reset_on_close: bool = True, 
+            state_1d: bool = False,
             random_ofs_on_reset: bool = True,
-            reward_on_close: bool = False, volumes=False
+            reward_on_close: bool = False, feat_aug=False
     ):
         self._prices = prices
         if state_1d:
             self._state = State1D(bars_count, commission, reset_on_close,
-                                  reward_on_close=reward_on_close, volumes=volumes)
+                                  reward_on_close=reward_on_close, feat_aug=feat_aug)
         else:
             self._state = State(bars_count, commission, reset_on_close,
-                                reward_on_close=reward_on_close, volumes=volumes)
+                                reward_on_close=reward_on_close, feat_aug=feat_aug)
         self.action_space = spaces.Discrete(n=len(Actions))
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=self._state.shape, dtype=np.float32)
         self.random_ofs_on_reset = random_ofs_on_reset
 
-    def reset(self, *, seed: int | None = None, options: dict[str, tt.Any] | None = None):
+    def reset(self, *, seed: int | None = None, options: dict[str, tt.Any] | None = None, start_idx: int = 0):
         # make selection of the instrument and it's offset. Then reset the state
         super().reset(seed=seed, options=options)
         self._instrument = self.np_random.choice(list(self._prices.keys()))
         prices = self._prices[self._instrument]
         bars = self._state.bars_count
+        safe_start = max(start_idx, self._state.bars_count)
         if self.random_ofs_on_reset:
-            offset = self.np_random.choice(prices.high.shape[0]-bars*10) + bars
+             # -bars为了保证每个 Episode 至少能走 bars_count 步
+            offset = self.np_random.choice(prices.Close.shape[0]-bars-safe_start) + safe_start
+            
         else:
-            offset = bars
+            offset = safe_start
         self._state.reset(prices, offset)
         return self._state.encode(), {}
 
@@ -188,10 +192,3 @@ class StocksEnv(gym.Env):
         }
         return obs, reward, done, False, info
 
-    @classmethod
-    def from_dir(cls, data_dir: str, **kwargs):
-        prices = {
-            file: data.load_relative(file)
-            for file in data.price_files(data_dir)
-        }
-        return StocksEnv(prices, **kwargs)

@@ -12,20 +12,20 @@ from ignite.engine import Engine
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
 from lib import environ, data, models, common, validation
+from data_process.features import get_feat_split
+from config import env_config
 
 SAVES_DIR = pathlib.Path("saves")
-root_dir = "/home/yao/myproject/rl_for_trading/Rl_trading_demo/project_one/"
-STOCKS = root_dir + "data/YNDX_160101_161231.csv"
-VAL_STOCKS = root_dir + "data/YNDX_150101_151231.csv"
+root_dir = "/home/yao/myproject/rl_for_trading/Rl_trading_demo/project_one/data/518880.SH.30m.csv"
 
 BATCH_SIZE = 32
-BARS_COUNT = 10
+BARS_COUNT = 20
 
 EPS_START = 1.0
 EPS_FINAL = 0.1
 EPS_STEPS = 1000000
 
-GAMMA = 0.99
+GAMMA = 0.98
 
 REPLAY_SIZE = 100000
 REPLAY_INITIAL = 10000  # initial steps to fill the replay buffer
@@ -33,13 +33,13 @@ REWARD_STEPS = 2  # steps to calculate reward
 LEARNING_RATE = 0.0001
 STATES_TO_EVALUATE = 1000
 
+# 训练起点要跳过一定的时间，
+TRAIN_START_IDX = BARS_COUNT
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dev", help="Training device name", default="cpu")
-    parser.add_argument("--data", default=STOCKS, help=f"Stocks file or dir, default={STOCKS}")
-    parser.add_argument("--year", type=int, help="Year to train on, overrides --data")
-    parser.add_argument("--val", default=VAL_STOCKS, help="Validation data, default=" + VAL_STOCKS)
+    parser.add_argument("--data", default=root_dir, help=f"Stocks file dir")
     parser.add_argument("-r", "--run", required=True, help="Run name")
     args = parser.parse_args()
     device = torch.device(args.dev)
@@ -48,31 +48,19 @@ if __name__ == "__main__":
     saves_path.mkdir(parents=True, exist_ok=True)
 
     data_path = pathlib.Path(args.data)
-    val_path = pathlib.Path(args.val)
 
-    if args.year is not None or data_path.is_file():
-        if args.year is not None:
-            stock_data = data.load_year_data(args.year)
-        else:
-            stock_data = {"YNDX": data.load_relative(data_path)}
-        env = environ.StocksEnv(
-            stock_data, bars_count=BARS_COUNT)
-        env_tst = environ.StocksEnv(
-            stock_data, bars_count=BARS_COUNT)
-    elif data_path.is_dir():
-        env = environ.StocksEnv.from_dir(
-            data_path, bars_count=BARS_COUNT)
-        env_tst = environ.StocksEnv.from_dir(
-            data_path, bars_count=BARS_COUNT)
+    if data_path.is_dir():
+        train_price_gold, val_price_gold, test_price_gold = data.csv_to_state_gold(data_path)
+        env_train = environ.StocksEnv({"gold":train_price_gold}, bars_count=BARS_COUNT, reset_on_close = False)
+        env_val = environ.StocksEnv({"gold":val_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
+        env_tst = environ.StocksEnv({"gold":test_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
     else:
         raise RuntimeError("No data to train on")
 
-    env = wrappers.TimeLimit(env, max_episode_steps=1000)  # 限制每个 episode 的最大步数
-    val_data = {"YNDX": data.load_relative(val_path)}
-    env_val = environ.StocksEnv(val_data, bars_count=BARS_COUNT)
+    env_train = wrappers.TimeLimit(env_train, max_episode_steps=3000)  # 限制每个 episode 的最大步数
 
-    net = models.SimpleFFDQN(env.observation_space.shape[0],
-                             env.action_space.n).to(device)
+    net = models.SimpleFFDQN(env_train.observation_space.shape[0],
+                             env_train.action_space.n).to(device)
     tgt_net = ptan.agent.TargetNet(net)
 
     selector = ptan.actions.EpsilonGreedyActionSelector(EPS_START)
@@ -80,7 +68,7 @@ if __name__ == "__main__":
         selector, EPS_START, EPS_FINAL, EPS_STEPS)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
     exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, GAMMA, steps_count=REWARD_STEPS)
+        env_train, agent, GAMMA, steps_count=REWARD_STEPS)
     buffer = ptan.experience.ExperienceReplayBuffer(
         exp_source, REPLAY_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
@@ -129,11 +117,11 @@ if __name__ == "__main__":
 
     @engine.on(ptan.ignite.PeriodEvents.ITERS_10000_COMPLETED)
     def validate(engine: Engine):
-        res = validation.validation_run(env_tst, net, device=device)
+        res = validation.validation_run(env_tst, net, device=device,comission=env_config["commission"])
         print("%d: tst: %s" % (engine.state.iteration, res))
         for key, val in res.items():
             engine.state.metrics[key + "_tst"] = val
-        res = validation.validation_run(env_val, net, device=device)
+        res = validation.validation_run(env_val, net, device=device,comission=env_config["commission"])
         print("%d: val: %s" % (engine.state.iteration, res))
         for key, val in res.items():
             engine.state.metrics[key + "_val"] = val

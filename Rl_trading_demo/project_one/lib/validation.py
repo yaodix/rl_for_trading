@@ -12,7 +12,7 @@ METRICS = (
 )
 
 
-def validation_run(env, net, episodes=100, device="cpu", epsilon=0.02, comission=0.1):
+def validation_run(env, net, episodes=100, device="cpu", epsilon=0.00, comission=0.5/10000):
     stats = { metric: [] for metric in METRICS }
 
     for episode in range(episodes):
