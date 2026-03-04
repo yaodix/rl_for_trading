@@ -9,7 +9,7 @@ from . import data
 from . import config
 
 DEFAULT_BARS_COUNT = 10
-DEFAULT_COMMISSION_PERC = 0.5/10000.  # 是万0.5吗
+DEFAULT_COMMISSION_PERC = config.env_config["commission"]  # 是万0.5吗
 
 class Actions(enum.Enum):
     Skip = 0
@@ -30,7 +30,7 @@ class State:
         
         # 账户状态
         self.have_position = False
-        self.cash = config.env_config["cash"]  # 用现金不好计算，用每次买卖固定股数进行交易？
+        self.cash = config.env_config["cash"]  # 用现金不好计算，用每次买卖固定股数进行交易
         self.shares = 0.0        
         self.entry_price = 0.0
         self.entry_total_asset = 0.0  # 记录入口总价值（现金 + 持仓市值）
@@ -157,9 +157,9 @@ class State:
                     self.idle_days = 0  # 重置空仓计数
                     action_executed = True
                     
-            # else: # 无法购买100股以上, 直接结束? 还是学习不购买?
+            else: # 无法购买100股以上, 直接结束? 还是学习不购买?
             #     done = True
-            #     print(f"warning: not enough cash to buy 100 shares at {execute_price}")
+                print(f"warning: not enough cash to buy 100 shares at {execute_price}")
                                    
         elif action == Actions.Close and self.have_position:
             # 卖出用更低价格
@@ -242,7 +242,8 @@ class StocksEnv(gym.Env):
             reset_on_close: bool = True, 
             state_1d: bool = False,
             random_ofs_on_reset: bool = True,
-            reward_on_close: bool = False, feat_aug=False
+            reward_on_close: bool = False, 
+            feat_aug=False
     ):
         self._prices = prices
         if state_1d:
