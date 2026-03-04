@@ -281,5 +281,6 @@ class StocksEnv(gym.Env):
             "instrument": self._instrument,
             "offset": self._state._offset
         }
+        # print(f"Step: action={action}, reward={reward}, position={self._state.have_position}")  # 调试
         return obs, reward, done, False, info
 

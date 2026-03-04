@@ -13,23 +13,23 @@ from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
 from lib import environ, data, models, common, validation
 from data_process.features import get_feat_split
-from Rl_trading_demo.project_one.lib.config import env_config
+from lib.config import env_config, train_config
 
 SAVES_DIR = pathlib.Path("saves")
 root_dir = "/home/yao/myproject/rl_for_trading/Rl_trading_demo/project_one/data/518880.SH.30m.csv"
 
 BATCH_SIZE = 32
-BARS_COUNT = 20
+BARS_COUNT = train_config["bars_cnt"]
 
 EPS_START = 1.0
 EPS_FINAL = 0.1
-EPS_STEPS = 1000000
+EPS_STEPS = 200000
 
 GAMMA = 0.98
 
 REPLAY_SIZE = 100000
 REPLAY_INITIAL = 10000  # initial steps to fill the replay buffer
-REWARD_STEPS = 2  # steps to calculate reward
+REWARD_STEPS = 1  # steps to calculate reward
 LEARNING_RATE = 0.0001
 STATES_TO_EVALUATE = 1000
 
@@ -49,11 +49,11 @@ if __name__ == "__main__":
 
     data_path = pathlib.Path(args.data)
 
-    if data_path.is_dir():
+    if data_path.is_file():
         train_price_gold, val_price_gold, test_price_gold = data.csv_to_state_gold(data_path)
         env_train = environ.StocksEnv({"gold":train_price_gold}, bars_count=BARS_COUNT, reset_on_close = True, reward_on_close=False)
-        env_val = environ.StocksEnv({"gold":val_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
-        env_tst = environ.StocksEnv({"gold":test_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
+        env_val = environ.StocksEnv({"gold":val_price_gold}, bars_count=BARS_COUNT, reset_on_close = True, reward_on_close=False)
+        env_tst = environ.StocksEnv({"gold":test_price_gold}, bars_count=BARS_COUNT, reset_on_close = True, reward_on_close=False)
     else:
         raise RuntimeError("No data to train on")
 
@@ -117,11 +117,11 @@ if __name__ == "__main__":
 
     @engine.on(ptan.ignite.PeriodEvents.ITERS_10000_COMPLETED)
     def validate(engine: Engine):
-        res = validation.validation_run(env_tst, net, device=device,comission=env_config["commission"])
+        res = validation.validation_run(env_tst, net, device=device, commission=env_config["commission"])
         print("%d: tst: %s" % (engine.state.iteration, res))
         for key, val in res.items():
             engine.state.metrics[key + "_tst"] = val
-        res = validation.validation_run(env_val, net, device=device,comission=env_config["commission"])
+        res = validation.validation_run(env_val, net, device=device, commission=env_config["commission"])
         print("%d: val: %s" % (engine.state.iteration, res))
         for key, val in res.items():
             engine.state.metrics[key + "_val"] = val
