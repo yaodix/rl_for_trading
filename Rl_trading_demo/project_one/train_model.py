@@ -13,7 +13,7 @@ from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
 from lib import environ, data, models, common, validation
 from data_process.features import get_feat_split
-from config import env_config
+from Rl_trading_demo.project_one.lib.config import env_config
 
 SAVES_DIR = pathlib.Path("saves")
 root_dir = "/home/yao/myproject/rl_for_trading/Rl_trading_demo/project_one/data/518880.SH.30m.csv"
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     if data_path.is_dir():
         train_price_gold, val_price_gold, test_price_gold = data.csv_to_state_gold(data_path)
-        env_train = environ.StocksEnv({"gold":train_price_gold}, bars_count=BARS_COUNT, reset_on_close = False)
+        env_train = environ.StocksEnv({"gold":train_price_gold}, bars_count=BARS_COUNT, reset_on_close = True, reward_on_close=False)
         env_val = environ.StocksEnv({"gold":val_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
         env_tst = environ.StocksEnv({"gold":test_price_gold}, bars_count=BARS_COUNT, reset_on_close = True)
     else:
