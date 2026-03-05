@@ -23,9 +23,9 @@ BARS_COUNT = train_config["bars_cnt"]
 
 EPS_START = 1.0
 EPS_FINAL = 0.1
-EPS_STEPS = 200000
+EPS_STEPS = 1000000
 
-GAMMA = 0.98
+GAMMA = train_config["gamma"]
 
 REPLAY_SIZE = 100000
 REPLAY_INITIAL = 10000  # initial steps to fill the replay buffer

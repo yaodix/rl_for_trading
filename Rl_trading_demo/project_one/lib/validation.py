@@ -14,7 +14,7 @@ def safe_mean(vals):
     """安全计算均值，避免空列表报错"""
     return np.mean(vals) if len(vals) > 0 else 0.0
 
-def validation_run(env, net, episodes=100, device="cpu", epsilon=0.0, 
+def validation_run(env, net, episodes=500, device="cpu", epsilon=0.0, 
                    commission=0.5/10000, slippage=0.0001):
     """
     验证函数（修复版）
